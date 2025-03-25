@@ -1,5 +1,5 @@
 // backend/src/events/events.controller.ts
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Event } from './event.entity';
 
@@ -25,6 +25,11 @@ export class EventsController {
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateData: Partial<Event>): Promise<Event> {
     return this.eventsService.update(Number(id), updateData);
+  }
+
+  @Patch(':id/soft-delete')
+  async softDelete(@Param('id') id: string): Promise<Event> {
+    return this.eventsService.softDelete(Number(id));
   }
 
   @Delete(':id')

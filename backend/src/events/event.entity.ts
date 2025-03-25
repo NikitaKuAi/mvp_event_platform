@@ -29,6 +29,9 @@ export class Event {
   @Column()
   organizerId: number;
 
+  @Column({ type: 'timestamp', nullable: true })
+  deletedAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

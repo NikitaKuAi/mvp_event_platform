@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Event } from './event.entity';
 
 @Injectable()
@@ -16,11 +16,12 @@ export class EventsService {
   }
 
   async findAll(): Promise<Event[]> {
-    return this.eventRepository.find();
+    // Используем IsNull() для проверки, что deletedAt равен null
+    return this.eventRepository.find({ where: { deletedAt: IsNull() } });
   }
 
   async findOne(id: number): Promise<Event> {
-    const event = await this.eventRepository.findOne({ where: { id } });
+    const event = await this.eventRepository.findOne({ where: { id, deletedAt: IsNull() } });
     if (!event) {
       throw new NotFoundException(`Мероприятие с ID ${id} не найдено`);
     }
@@ -30,6 +31,12 @@ export class EventsService {
   async update(id: number, updateData: Partial<Event>): Promise<Event> {
     await this.eventRepository.update(id, updateData);
     return this.findOne(id);
+  }
+
+  async softDelete(id: number): Promise<Event> {
+    const event = await this.findOne(id);
+    event.deletedAt = new Date();
+    return this.eventRepository.save(event);
   }
 
   async remove(id: number): Promise<void> {
