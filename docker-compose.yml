@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:17.4
+    restart: always
+    environment:
+      POSTGRES_USER: mvp_user
+      POSTGRES_PASSWORD: mvp_pass
+      POSTGRES_DB: mvp_db
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
