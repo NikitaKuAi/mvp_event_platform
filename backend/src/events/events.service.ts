@@ -1,3 +1,4 @@
+// backend/src/events/events.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
@@ -16,7 +17,6 @@ export class EventsService {
   }
 
   async findAll(): Promise<Event[]> {
-    // Используем IsNull() для проверки, что deletedAt равен null
     return this.eventRepository.find({ where: { deletedAt: IsNull() } });
   }
 
@@ -36,6 +36,16 @@ export class EventsService {
   async softDelete(id: number): Promise<Event> {
     const event = await this.findOne(id);
     event.deletedAt = new Date();
+    return this.eventRepository.save(event);
+  }
+
+  async restore(id: number): Promise<Event> {
+    // Находим мероприятие, включая удалённое
+    const event = await this.eventRepository.findOne({ where: { id } });
+    if (!event) {
+      throw new NotFoundException(`Мероприятие с ID ${id} не найдено`);
+    }
+    event.deletedAt = null;
     return this.eventRepository.save(event);
   }
 
