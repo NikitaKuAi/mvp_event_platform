@@ -1,4 +1,3 @@
-// backend/src/events/event.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('events')
@@ -21,13 +20,14 @@ export class Event {
   @Column()
   location: string;
 
-  // Хранение ссылок на фотографии в виде массива строк (через "simple-array")
   @Column('simple-array', { nullable: true })
   mediaUrls: string[];
 
-  // ID организатора (пользователя, создавшего мероприятие)
   @Column()
   organizerId: number;
+
+  @Column({ type: 'int', default: 0 })
+  capacity: number;
 
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date | null;

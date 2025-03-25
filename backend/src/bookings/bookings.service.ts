@@ -1,22 +1,58 @@
+// backend/src/bookings/bookings.service.ts
+
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Booking, BookingStatus } from './booking.entity';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class BookingsService {
   constructor(
     @InjectRepository(Booking)
     private readonly bookingRepository: Repository<Booking>,
+    private readonly eventsService: EventsService,
   ) {}
 
   async create(bookingData: Partial<Booking>): Promise<Booking> {
-    // Проверка: нельзя бронировать более 3 мест
-    if (bookingData.seats && bookingData.seats > 3) {
-      throw new BadRequestException('Нельзя бронировать более 3 мест');
+    // Проверка наличия eventId
+    if (bookingData.eventId === undefined) {
+      throw new BadRequestException('EventId is required');
     }
+
+    // Получаем мероприятие по eventId
+    const event = await this.eventsService.findOne(Number(bookingData.eventId));
+    if (!event) {
+      throw new NotFoundException('Мероприятие не найдено');
+    }
+
+    // Проверяем, что мероприятие не удалено
+    if (event.deletedAt) {
+      throw new BadRequestException('Нельзя бронировать удалённое мероприятие');
+    }
+
+    // Проверяем, что бронирование не превышает 3 места на одного пользователя
+    if (bookingData.seats && bookingData.seats > 3) {
+      throw new BadRequestException('Нельзя бронировать более 3 мест на одного пользователя');
+    }
+
+    // Получаем все активные бронирования для данного мероприятия
+    const currentBookings = await this.bookingRepository.find({
+      where: { 
+        eventId: bookingData.eventId, 
+        status: 'active' 
+      },
+    });
+    const totalBookedSeats = currentBookings.reduce((sum, booking) => sum + booking.seats, 0);
+
+    // Проверяем, что общее количество мест не превышает вместимость мероприятия
+    if (totalBookedSeats + (bookingData.seats || 1) > event.capacity!) {
+      throw new BadRequestException('Превышено количество доступных мест для данного мероприятия');
+    }
+
+    // Создаем бронирование (по умолчанию seats = 1, если не указано)
     const booking = this.bookingRepository.create({
-      seats: 1, // по умолчанию 1, если не указано
+      seats: bookingData.seats || 1,
       status: 'active',
       ...bookingData,
     });
