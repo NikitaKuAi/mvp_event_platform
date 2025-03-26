@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Patch, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { Event } from './event.entity';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Controller('events')
 export class EventsController {
@@ -19,6 +20,12 @@ export class EventsController {
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Event> {
     return this.eventsService.findOne(Number(id));
+  }
+
+  @Get('organizer')
+  @Roles('organizer')
+  async findOrganizerEvents(@Req() req): Promise<Event[]> {
+    return this.eventsService.findByOrganizer(req.user.id);
   }
 
   @Put(':id')

@@ -1,5 +1,3 @@
-// backend/src/bookings/bookings.service.ts
-
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
@@ -71,6 +69,10 @@ export class BookingsService {
     return booking;
   }
 
+  async findByUser(userId: number): Promise<Booking[]> {
+    return this.bookingRepository.find({ where: { userId } });
+  }  
+
   async update(id: number, updateData: Partial<Booking>): Promise<Booking> {
     await this.bookingRepository.update(id, updateData);
     return this.findOne(id);
@@ -78,5 +80,15 @@ export class BookingsService {
 
   async remove(id: number): Promise<void> {
     await this.bookingRepository.delete(id);
+  }
+
+  // Новый метод для отмены бронирования (cancel)
+  async cancel(id: number): Promise<Booking> {
+    const booking = await this.findOne(id);
+    if (booking.status !== 'active') {
+      throw new BadRequestException('Бронирование уже отменено или оплачено');
+    }
+    booking.status = 'cancelled';
+    return this.bookingRepository.save(booking);
   }
 }

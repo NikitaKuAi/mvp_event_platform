@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { Booking } from './booking.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('bookings')
 export class BookingsController {
@@ -26,9 +27,22 @@ export class BookingsController {
     return this.bookingsService.update(Number(id), updateData);
   }
 
+  // Новый эндпоинт для отмены бронирования
+  @Patch(':id/cancel')
+  async cancel(@Param('id') id: string): Promise<Booking> {
+    return this.bookingsService.cancel(Number(id));
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<{ message: string }> {
     await this.bookingsService.remove(Number(id));
     return { message: 'Бронирование удалено' };
+  }
+
+  // Эндпоинт для получения бронирований текущего пользователя
+  @UseGuards(JwtAuthGuard)
+  @Get('my')
+  async getMyBookings(@Req() req): Promise<Booking[]> {
+    return this.bookingsService.findByUser(req.user.id);
   }
 }

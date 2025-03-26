@@ -1,6 +1,7 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateOrganizerDto } from './dto/create-organizer.dto';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 
@@ -21,13 +22,14 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
+    const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  async register(createUserDto: CreateUserDto) {
+  // Регистрация обычного пользователя
+  async registerUser(createUserDto: CreateUserDto) {
     const userExists = await this.usersService.findByEmail(createUserDto.email);
     if (userExists) {
       throw new ConflictException('Пользователь с таким email уже существует');
@@ -39,5 +41,20 @@ export class AuthService {
       role: 'user',
     });
     return this.login(newUser);
+  }
+
+  // Регистрация организатора
+  async registerOrganizer(createOrganizerDto: CreateOrganizerDto) {
+    const userExists = await this.usersService.findByEmail(createOrganizerDto.email);
+    if (userExists) {
+      throw new ConflictException('Пользователь с таким email уже существует');
+    }
+    const hashedPassword = await bcrypt.hash(createOrganizerDto.password, 10);
+    const newOrganizer = await this.usersService.create({
+      ...createOrganizerDto,
+      passwordHash: hashedPassword,
+      role: 'organizer',
+    });
+    return this.login(newOrganizer);
   }
 }

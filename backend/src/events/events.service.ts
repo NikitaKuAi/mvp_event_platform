@@ -28,6 +28,11 @@ export class EventsService {
     return event;
   }
 
+  async findByOrganizer(organizerId: number): Promise<Event[]> {
+    return this.eventRepository.find({ where: { organizerId, deletedAt: IsNull() } });
+  }
+  
+
   async update(id: number, updateData: Partial<Event>): Promise<Event> {
     await this.eventRepository.update(id, updateData);
     return this.findOne(id);

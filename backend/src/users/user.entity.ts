@@ -18,6 +18,13 @@ export class User {
   @Column({ default: 'user' })
   role: string;
 
+  // Дополнительные поля для организатора
+  @Column({ nullable: true })
+  organizationName?: string;
+
+  @Column({ nullable: true })
+  phone?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
