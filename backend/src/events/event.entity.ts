@@ -29,6 +29,9 @@ export class Event {
   @Column({ type: 'int', default: 0 })
   capacity: number;
 
+  @Column({ default: 'draft' })
+  status: string;
+
   @Column({ type: 'timestamp', nullable: true })
   deletedAt: Date | null;
 

@@ -7,16 +7,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Эндпоинт для получения пользователя по email (оставляем для обратной совместимости)
-  @Get(':email')
-  async getUserByEmail(@Param('email') email: string): Promise<User> {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
-    return user;
-  }
-
   // Новый эндпоинт для личного кабинета текущего пользователя
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -24,6 +14,16 @@ export class UsersController {
     const user = await this.usersService.findByEmail(req.user.email);
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  // Эндпоинт для получения пользователя по email (оставляем для обратной совместимости)
+  @Get(':email')
+  async getUserByEmail(@Param('email') email: string): Promise<User> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
     }
     return user;
   }

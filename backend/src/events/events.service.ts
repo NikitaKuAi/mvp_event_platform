@@ -1,5 +1,4 @@
-// backend/src/events/events.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Event } from './event.entity';
@@ -31,7 +30,6 @@ export class EventsService {
   async findByOrganizer(organizerId: number): Promise<Event[]> {
     return this.eventRepository.find({ where: { organizerId, deletedAt: IsNull() } });
   }
-  
 
   async update(id: number, updateData: Partial<Event>): Promise<Event> {
     await this.eventRepository.update(id, updateData);
@@ -56,5 +54,15 @@ export class EventsService {
 
   async remove(id: number): Promise<void> {
     await this.eventRepository.delete(id);
+  }
+
+  // Метод публикации мероприятия: проверяет, что текущий организатор является владельцем
+  async publish(id: number, currentOrganizerId: number): Promise<Event> {
+    const event = await this.findOne(id);
+    if (event.organizerId !== currentOrganizerId) {
+      throw new ForbiddenException('Вы можете публиковать только свои мероприятия');
+    }
+    event.status = 'published';
+    return this.eventRepository.save(event);
   }
 }

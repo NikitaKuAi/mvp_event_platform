@@ -61,6 +61,10 @@ export class BookingsService {
     return this.bookingRepository.find();
   }
 
+  async findAllByEvent(eventId: number): Promise<Booking[]> {
+    return this.bookingRepository.find({ where: { eventId } });
+  }
+
   async findOne(id: number): Promise<Booking> {
     const booking = await this.bookingRepository.findOne({ where: { id } });
     if (!booking) {
@@ -71,7 +75,7 @@ export class BookingsService {
 
   async findByUser(userId: number): Promise<Booking[]> {
     return this.bookingRepository.find({ where: { userId } });
-  }  
+  }
 
   async update(id: number, updateData: Partial<Booking>): Promise<Booking> {
     await this.bookingRepository.update(id, updateData);

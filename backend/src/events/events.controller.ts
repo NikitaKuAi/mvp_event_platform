@@ -2,14 +2,27 @@ import { Controller, Get, Post, Put, Delete, Patch, Body, Param, UseGuards, Req 
 import { EventsService } from './events.service';
 import { Event } from './event.entity';
 import { Roles } from '../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('events')
+@UseGuards(JwtAuthGuard)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
+  // Только организаторы могут создавать мероприятия
   @Post()
-  async create(@Body() eventData: Partial<Event>): Promise<Event> {
+  @Roles('organizer')
+  async create(@Body() eventData: Partial<Event>, @Req() req): Promise<Event> {
+    console.log('User from token:', req.user);
+    eventData.organizerId = req.user.id;
     return this.eventsService.create(eventData);
+  }
+
+  // Статический маршрут для организатора должен идти раньше динамического
+  @Get('organizer')
+  @Roles('organizer')
+  async findOrganizerEvents(@Req() req): Promise<Event[]> {
+    return this.eventsService.findByOrganizer(req.user.id);
   }
 
   @Get()
@@ -22,14 +35,8 @@ export class EventsController {
     return this.eventsService.findOne(Number(id));
   }
 
-  @Get('organizer')
-  @Roles('organizer')
-  async findOrganizerEvents(@Req() req): Promise<Event[]> {
-    return this.eventsService.findByOrganizer(req.user.id);
-  }
-
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateData: Partial<Event>): Promise<Event> {
+  async update(@Param('id') id: string, @Body() updateData: Partial<Event>, @Req() req): Promise<Event> {
     return this.eventsService.update(Number(id), updateData);
   }
 
@@ -41,6 +48,12 @@ export class EventsController {
   @Patch(':id/restore')
   async restore(@Param('id') id: string): Promise<Event> {
     return this.eventsService.restore(Number(id));
+  }
+
+  @Patch(':id/publish')
+  @Roles('organizer')
+  async publish(@Param('id') id: string, @Req() req): Promise<Event> {
+    return this.eventsService.publish(Number(id), req.user.sub);
   }
 
   @Delete(':id')
